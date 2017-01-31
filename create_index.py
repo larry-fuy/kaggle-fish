@@ -35,8 +35,9 @@ import random
 import subprocess
 import sys
 
-DATA_DIR = "gs://kaggle-yfu-data"
-WORK_DIR = "gs://kaggle-yfu"
+# TODO: fetch project from cloud api
+DATA_DIR = "gs://kaggle-157221-yfu-data"
+WORK_DIR = "gs://kaggle-157221-yfu"
 TASK = "fish"
 DATA_PATH = os.path.join(DATA_DIR, TASK)
 WORK_PATH = os.path.join(WORK_DIR, TASK)

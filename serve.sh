@@ -19,13 +19,9 @@
 
 MODEL_NAME=fish
 VERSION_NAME=v1
-# Tell CloudML about a new type of model coming.  Think of a "model" here as
-# a namespace for deployed Tensorflow graphs.
+GCS_PATH=
 gcloud beta ml models create "$MODEL_NAME"
 
-# Each unique Tensorflow graph--with all the information it needs to execute--
-# corresponds to a "version".  Creating a version actually deploys our
-# Tensorflow graph to a Cloud instance, and gets is ready to serve (predict).
 gcloud beta ml versions create "$VERSION_NAME" \
   --model "$MODEL_NAME" \
   --origin "${GCS_PATH}/training/model"

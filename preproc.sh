@@ -22,7 +22,6 @@ declare -r BUCKET_WORK="gs://${PROJECT}-${USER}"
 declare -r TASK="fish"
 declare -r DATA_PATH="${BUCKET_DATA}"
 declare -r WORK_PATH="${BUCKET_WORK}"
-declare -r JOB_ID="${TASK}_${USER}_$(date +%Y%m%d_%H%M%S)"
 
 work_path=${WORK_PATH}
 data_path=${DATA_PATH}
@@ -62,25 +61,27 @@ dict_file="${data_path}/dict.txt"
 test_set="${work_path}/test_set.csv"
 train_set="${work_path}/train_set.csv"
 
-echo "Using job id: " $JOB_ID
-
 # Takes about 15 minutes to preprocess everything.  We serialize the two
 # preprocess.py synchronous calls just for shell scripting ease.  You could use
 # --runner DataflowPipelineRunner to run them asynchronously.
 echo "Preprocessing test set..."
+JOB_ID="${TASK}-$(date +%Y%m%d-%H%M%S)"
+echo "Using job id: " $JOB_ID
+
 python trainer/preprocess.py \
   --input_dict "${dict_file}" \
   --input_path "${test_set}" \
   --output_path "${work_path}/preproc/eval" \
-  --staging_location "${work_path}/staging" \
-  --temp_location "${work_path}/temp" \
+  --job_name "${JOB_ID}" \
   --cloud
 
 echo "Preprocessing train set..."
+JOB_ID="${TASK}-$(date +%Y%m%d-%H%M%S)"
+echo "Using job id: " $JOB_ID
+
 python trainer/preprocess.py \
   --input_dict "${dict_file}" \
   --input_path "${train_set}" \
   --output_path "${work_path}/preproc/train" \
-  --staging_location "${work_path}/staging" \
-  --temp_location "${work_path}/temp" \
+  --job_name "${JOB_ID}" \
   --cloud

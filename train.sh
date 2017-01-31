@@ -21,8 +21,8 @@
 declare -r PROJECT=$(gcloud config list project --format "value(core.project)" 2>/dev/null)
 declare -r BUCKET_WORK="gs://${PROJECT}-yfu"
 declare -r TASK="fish"
-declare -r WORK_PATH="${BUCKET_WORK}/${TASK}"
-declare -r JOB_ID="fish_${USER}_$(date +%Y%m%d_%H%M%S)"
+declare -r WORK_PATH="${BUCKET_WORK}"
+declare -r JOB_ID="${TASK}_${USER}_$(date +%Y%m%d_%H%M%S)"
 
 work_path=${WORK_PATH}
 

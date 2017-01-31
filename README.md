@@ -12,24 +12,24 @@ solution](https://www.kaggle.com/drn01z3/the-nature-conservancy-fisheries-monito
 
 ## Data
 
-Raw train and test images are in ```gs://oci-analytics-data/fish```.
+Raw train and test images are in DATA_PATH.
 
 ## Run
 
 1) Set up [environment](https://cloud.google.com/ml/docs/how-tos/getting-set-up)
 
 2) Set up ```data_path``` and ```work_path``` for images data and working space.
-The defaults are ```gs:\\oci-analytics-data\fish``` and
-```gs:\\oci-analytics-yfu\fish```. To change default path you could
-add option in the following commands
+The defaults are DATA_PATH and WORK_PATH. To change default path you could
+add option in the following commands.
 
 ### Generate index
 
 To run CloudML there should be index files which include mapping between image path and its label.
-Running ```python create_index.py``` will generate 3 index files (if they are not existed):
+Running ```python create_index.py``` will generate 3 index files (if they are not existed) and dictionary file:
   * ```all_set.csv```: the index file for all images (but not include image in test directory)
   * ```train_set.csv```: the index file of images for training
   * ```test_set.csv```: the index file of images for testing
+  * ```dict.txt```: the dictionary file
 
 ### Preprocessing
 

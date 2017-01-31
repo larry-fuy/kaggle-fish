@@ -156,7 +156,7 @@ class ReadImageAndConvertToJpegDoFn(beam.DoFn):
     uri, label_ids = context.element
 
     try:
-      with file_io.FileIO(uri, mode='rb') as f:
+      with file_io.FileIO(uri, mode='r') as f:
         image_bytes = f.read()
         img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
 
