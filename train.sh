@@ -61,11 +61,13 @@ gcloud beta ml jobs submit training "$JOB_ID" \
   --package-path trainer \
   --staging-bucket "${BUCKET_WORK}" \
   --region us-central1 \
-  --config=config.yaml \
   -- \
   --output_path "${work_path}/training" \
   --eval_data_paths "${work_path}/preproc/eval*" \
   --train_data_paths "${work_path}/preproc/train*"
+# Add config file into training
+#  --config=config.yaml \
 
 # Submit job is async, but stream-log will show us the logs and quit when done.
 gcloud beta ml jobs stream-logs "$JOB_ID"
+

@@ -64,16 +64,16 @@ train_set="${work_path}/train_set.csv"
 # Takes about 15 minutes to preprocess everything.  We serialize the two
 # preprocess.py synchronous calls just for shell scripting ease.  You could use
 # --runner DataflowPipelineRunner to run them asynchronously.
-echo "Preprocessing test set..."
-JOB_ID="${TASK}-$(date +%Y%m%d-%H%M%S)"
-echo "Using job id: " $JOB_ID
+# echo "Preprocessing test set..."
+# JOB_ID="${TASK}-$(date +%Y%m%d-%H%M%S)"
+# echo "Using job id: " $JOB_ID
 
-python trainer/preprocess.py \
-  --input_dict "${dict_file}" \
-  --input_path "${test_set}" \
-  --output_path "${work_path}/preproc/eval" \
-  --job_name "${JOB_ID}" \
-  --cloud
+# python trainer/preprocess.py \
+#   --input_dict "${dict_file}" \
+#   --input_path "${test_set}" \
+#   --output_path "${work_path}/preproc/eval" \
+#   --job_name "${JOB_ID}" \
+#   --cloud
 
 echo "Preprocessing train set..."
 JOB_ID="${TASK}-$(date +%Y%m%d-%H%M%S)"
