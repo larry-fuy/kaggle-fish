@@ -17,12 +17,12 @@
 # An index file including mapping between image path and label is necessary.
 
 declare -r PROJECT=$(gcloud config list project --format "value(core.project)" 2>/dev/null)
-declare -r BUCKET_DATA="gs://${PROJECT}-data"
-declare -r BUCKET_WORK="gs://${PROJECT}-yfu"
+declare -r BUCKET_DATA="gs://${PROJECT}-${USER}-data"
+declare -r BUCKET_WORK="gs://${PROJECT}-${USER}"
 declare -r TASK="fish"
-declare -r DATA_PATH="${BUCKET_DATA}/${TASK}"
-declare -r WORK_PATH="${BUCKET_WORK}/${TASK}"
-declare -r JOB_ID="fish_${USER}_$(date +%Y%m%d_%H%M%S)"
+declare -r DATA_PATH="${BUCKET_DATA}"
+declare -r WORK_PATH="${BUCKET_WORK}"
+declare -r JOB_ID="${TASK}_${USER}_$(date +%Y%m%d_%H%M%S)"
 
 work_path=${WORK_PATH}
 data_path=${DATA_PATH}
@@ -53,7 +53,7 @@ while true; do
 	-d) data_path=$2; shift ;;
 	-w) work_path=$2; shift ;;
 	--) shift; break ;;
-	-h|--help) echo "${help_msg}"; shift ;;
+	-h|--help) echo "${help_msg}"; exit 0 ;;
 	*) break ;;
     esac
 done
@@ -72,6 +72,8 @@ python trainer/preprocess.py \
   --input_dict "${dict_file}" \
   --input_path "${test_set}" \
   --output_path "${work_path}/preproc/eval" \
+  --staging_location "${work_path}/staging" \
+  --temp_location "${work_path}/temp" \
   --cloud
 
 echo "Preprocessing train set..."
@@ -79,4 +81,6 @@ python trainer/preprocess.py \
   --input_dict "${dict_file}" \
   --input_path "${train_set}" \
   --output_path "${work_path}/preproc/train" \
+  --staging_location "${work_path}/staging" \
+  --temp_location "${work_path}/temp" \
   --cloud

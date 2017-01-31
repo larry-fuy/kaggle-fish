@@ -1,4 +1,4 @@
-# Copyright 2016 Yong Fu. All Rights Reserved.
+# Copyright 2017 Yong Fu. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -46,6 +46,7 @@ For other flags, see PrepareImagesOptions() bellow.
 
 To run this pipeline locally run the above command without --cloud.
 
+TODO(b/31434218)
 """
 import argparse
 import csv
@@ -57,7 +58,10 @@ import subprocess
 import sys
 
 import apache_beam as beam
-from apache_beam.utils.options import PipelineOptions
+try:
+  from apache_beam.utils.pipeline_options import PipelineOptions
+except ImportError:
+  from apache_beam.utils.options import PipelineOptions
 from PIL import Image
 import tensorflow as tf
 
@@ -80,7 +84,8 @@ embedding_good = beam.Aggregator('embedding_good')
 embedding_bad = beam.Aggregator('embedding_bad')
 incompatible_image = beam.Aggregator('incompatible_image')
 invalid_uri = beam.Aggregator('invalid_file_name')
-ignored_unlabeled_image = beam.Aggregator('ignored_unlabeled_image')
+unlabeled_image = beam.Aggregator('unlabeled_image')
+unknown_label = beam.Aggregator('unknown_label')
 
 
 class Default(object):
@@ -124,13 +129,19 @@ class ExtractLabelIdsDoFn(beam.DoFn):
       return
 
     # In a real-world system, you may want to provide a default id for labels
-    # that were not in the dictionary.  In this sample, we will throw an error.
+    # that were not in the dictionary.  In this sample, we simply skip it.
     # This code already supports multi-label problems if you want to use it.
-    label_ids = [self.label_to_id_map[label.strip()] for label in row[1:]]
+    label_ids = []
+    for label in row[1:]:
+      try:
+        label_ids.append(self.label_to_id_map[label.strip()])
+      except KeyError:
+        context.aggregate_to(unknown_label)
+
     context.aggregate_to(labels_count, len(label_ids))
 
     if not label_ids:
-      context.aggregate_to(ignored_unlabeled_image, 1)
+      context.aggregate_to(unlabeled_image, 1)
     yield row[0], label_ids
 
 
@@ -145,7 +156,7 @@ class ReadImageAndConvertToJpegDoFn(beam.DoFn):
     uri, label_ids = context.element
 
     try:
-      with file_io.FileIO(uri, mode='r') as f:
+      with file_io.FileIO(uri, mode='rb') as f:
         image_bytes = f.read()
         img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
 
@@ -178,7 +189,14 @@ class EmbeddingsGraph(object):
     # input_jpeg is the tensor that contains raw image bytes.
     # It is used to feed image bytes and obtain embeddings.
     self.input_jpeg, self.embedding = self.build_graph()
-    self.tf_session.run(tf.initialize_all_variables())
+
+    # Remove this if once Tensorflow 0.12 is standard.
+    try:
+      init_op = tf.global_variables_initializer()
+    except AttributeError:
+      init_op = tf.initialize_all_variables()
+
+    self.tf_session.run(init_op)
     self.restore_from_checkpoint(Default.IMAGE_GRAPH_CHECKPOINT_URI)
 
   def build_graph(self):
@@ -320,13 +338,13 @@ class TFExampleFromImageDoFn(beam.DoFn):
 
 def configure_pipeline(p, opt):
   """Specify PCollection and transformations in pipeline."""
-  input_source = beam.io.TextFileSource(
+  read_input_source = beam.io.ReadFromText(
       opt.input_path, strip_trailing_newlines=True)
-  label_source = beam.io.TextFileSource(
+  read_label_source = beam.io.ReadFromText(
       opt.input_dict, strip_trailing_newlines=True)
-  labels = (p | 'Read dictionary' >> beam.Read(label_source))
+  labels = (p | 'Read dictionary' >> read_label_source)
   _ = (p
-       | 'Read input' >> beam.Read(input_source)
+       | 'Read input' >> read_input_source
        | 'Parse input' >> beam.Map(lambda line: csv.reader([line]).next())
        | 'Extract label ids' >> beam.ParDo(ExtractLabelIdsDoFn(),
                                            beam.pvalue.AsIter(labels))
@@ -378,12 +396,12 @@ def default_args(argv):
   parser.add_argument(
       '--job_name',
       type=str,
-      default='fish-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S'),
+      default='flowers-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S'),
       help='A unique job identifier.')
   parser.add_argument(
       '--staging_location', type=str, help='Path to the staging location.')
   parser.add_argument(
-      '--num_workers', default=10, type=int, help='The number of workers.')
+      '--num_workers', default=20, type=int, help='The number of workers.')
   parser.add_argument('--cloud', default=False, action='store_true')
   parser.add_argument(
       '--runner',
@@ -399,6 +417,8 @@ def default_args(argv):
             get_cloud_project(),
         'staging_location':
             os.path.join(os.path.dirname(parsed_args.output_path), 'staging'),
+        'temp_location':
+            os.path.join(os.path.dirname(parsed_args.output_path), 'temp'),
         'runner':
             'BlockingDataflowPipelineRunner',
         'extra_package':
