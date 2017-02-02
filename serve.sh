@@ -19,17 +19,17 @@
 
 MODEL_NAME=fish
 VERSION_NAME=v1
-GCS_PATH=
+MODEL_PATH=gs://kaggle-157221-yfu
 gcloud beta ml models create "$MODEL_NAME"
 
 gcloud beta ml versions create "$VERSION_NAME" \
   --model "$MODEL_NAME" \
-  --origin "${GCS_PATH}/training/model"
+  --origin "${MODEL_PATH}/training/model"
 
 # Models do not need a default version, but its a great way move your production
 # service from one version to another with a single gcloud command.
 output=$(gcloud beta ml versions set-default "$VERSION_NAME" --model "$MODEL_NAME")
-if !$?; then
+if [[$? -eq 0]]; then
     sleep 10m
     echo "Done. $MODEL_NAME is set up..."
 else
