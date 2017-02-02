@@ -8,7 +8,7 @@ for detail information of the competition. This project is inspired by
 [Google CloudML Flower
 example](https://github.com/GoogleCloudPlatform/cloudml-samples/tree/master/flowers)
 and [MXNet
-solution](https://www.kaggle.com/drn01z3/the-nature-conservancy-fisheries-monitoring/mxnet-xgboost-simple-solution/code)
+solution](https://www.kaggle.com/drn01z3/the-nature-conservancy-fisheries-monitoring/mxnet-xgboost-simple-solution/code). This project does not intent to generate results for competition but rather only show how to use Google Cloud ML to build a pipeline.
 
 ## Data
 
